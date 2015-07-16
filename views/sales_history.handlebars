@@ -1,0 +1,10 @@
+<div id = "container">
+
+	<h2>Sales History</h2>
+	
+	<ul class = "sales_history">
+		{{#each products}}
+		<li> {{this.itemName}} - {{this.soldItems}}</li>
+		{{/each}}
+	</ul>	
+</div>

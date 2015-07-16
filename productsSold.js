@@ -1,51 +1,57 @@
-	var fs = require('fs');
+var fs = require('fs');
 
-	module.exports = function(folderName){
+module.exports = function(fileName){
 
-		this.productNames = function(callback) {
-			var linesInFile = fs.readFileSync(folderName, "utf8"); 
-			var lines = linesInFile.split('\r');
-			var productList =[];
-
-			lines.forEach(function(fileLines){
-
-				var product = fileLines.split(';');
-				
-				var currentItem = product[2];
-				var productTotal = product[3];
-
-				var productMap = {
-					itemName : currentItem,
-					soldItems : Number(productTotal)
-				};
-				productList.push(productMap);
-			  });
-
-			callback(null, productList);
-		};
-
-		this.groupedItems = function(){
-			var linesInFile = 	fs.readFileSync(folderName, "utf8");
-			var productLines = linesInFile.split('\r');
-			var productCountMap = {};
-			productLines.forEach(function(productLine){
-
-				var splitLines = productLine.split(';');
-
-				var currentItem = splitLines[2];
-				var numberSold =  splitLines[3];
-
-				if(productCountMap[currentItem] === undefined)
-	            {
-	                    productCountMap[currentItem] = 0;
-	            }
-	                productCountMap[currentItem] += Number(numberSold);
-			});
+	//
+	this.productNames = function() {
+		var linesInFile = fs.readFileSync(fileName, "utf8"); 
+		var lines = linesInFile.split('\r');
+		var productList =[];
 
 
+		lines.forEach(function(fileLines){
 
-			return productCountMap;
-		};
+			var product = fileLines.split(';');
+			
+			var currentItem = product[2];
+			var productTotal = product[3];
+
+			var productMap = {
+				itemName : currentItem,
+				soldItems : Number(productTotal)
+			};
+			productList.push(productMap);
+		  });
+
+		return productList;
+
+	};
+
+	var groupedItems = function(){
+		var linesInFile = 	fs.readFileSync(fileName, "utf8");
+		var productLines = linesInFile.split('\r');
+
+		//remove the header
+		productLines = productLines.splice(1);
+
+		var productCountMap = {};
+		productLines.forEach(function(productLine){
+
+			var splitLines = productLine.split(';');
+
+			var currentItem = splitLines[2];
+			var numberSold =  splitLines[3];
+
+			if(productCountMap[currentItem] === undefined){
+                    productCountMap[currentItem] = 0;
+            }
+            productCountMap[currentItem] += Number(numberSold);
+		});
+		//console.log(productCountMap);
+		return productCountMap;
+	};
+
+	this.groupedItems = groupedItems;
 
 	var createProductList = function(csvFile){
 
@@ -89,37 +95,32 @@
 
 	this.mostPopular = function(){
 
-		var productList = createProductList(folderName);		
+		var productList = createProductList(fileName);		
 
 		productList.sort(function(a,b){
 			return b.numberSold-a.numberSold;
 		});
-
-		//console.log(productList)
-		// console.log(productList.length);
-		console.log(productList[0])
+		//console.log(productList[0])
 		return productList[0];
 	};
 
 	this.leastPopular = function(){
 
-		var productList = createProductList(folderName);		
+		var productList = createProductList(fileName);		
 
 		productList.sort(function(a,b){
 			return b.numberSold-a.numberSold;
 		});
-
-		//console.log(productList)
-		console.log(productList[productList.length-1]);
-		// console.log(productList[2])
 		return productList[productList.length-1];
 	};
 
 
-	//code for gouping products into categories 
-	this.category = function(productMap){
+	var numberOfEachCategorySold = function(){
 
-		  var catGroup = {
+		// get the qty per product
+		var productQtyMap = groupedItems();
+
+		var catGroup = {
 		  	'Imasi': 'Dairy',
 		  	'Bread': 'Bakery',
 		  	'Chakalaka Can': 'Canned Food',
@@ -140,55 +141,59 @@
 		  	'Valentine Cards': 'Valentine Goodies',
 		  };
 
-	var catMap = {}
+		var catMap = {};
 
+		for(var productName in productQtyMap){
 
-	for(var productName in productMap){
+			var catName = catGroup[productName];
+			var qty = productQtyMap[productName];
 
-		var catName = catGroup[productName];
-		var qty = productMap[productName];
+			// is the productName in the map?
+			if(catMap[catName] == undefined){
+				//if it is not in the map add it to the map...
+				catMap[catName] = 0;
+			}
 
-		//console.log("==> " + productName + " : " + catName + " : " + qty);
-
-		// is the productName in the map?
-		if(catMap[catName] == undefined){
-			//if it is not in the map add it to the map...
-			catMap[catName] = 0;
-		}
-
-		// now add the qty for each product to the correct qty...
-		catMap[catName] = catMap[catName] + Number(qty);
-	}
-
-	// create a list of categories
-	var categoryList = [];
+			// now add the qty for each product to the correct category qty...
+			catMap[catName] = catMap[catName] + Number(qty);
+		};
+		//console.log(catMap + "can we see it")
+		// create a list of categories
+		var categoryList = [];
         for(var key in catMap){		
 			var obj = {
-				currentItem : key,
-				numberSold: catMap[key]
+				name : key,
+				qty : catMap[key]
 			};
 			categoryList.push(obj);
 		}
+		//console.log("lllllllll"+categoryList)
+		return categoryList
+	}
 	
-	//sort the list desc
-	categoryList.sort(function(a,b){
-			return b.numberSold-a.numberSold;
-	});
+	this.numberOfEachCategorySold = numberOfEachCategorySold;
 
-	//creating an object literal to allow us to return two values
-	return {
-		mostPopularCat : categoryList[0],
-		leastPopularCat : categoryList[categoryList.length-1]
-	};
+	//code for gouping products into categories 
+	this.findMostAndLeastPopularCategories = function(productMap){
 
-	//return the first one
-	//return cat;
+		var categoryList = numberOfEachCategorySold(productMap);
+		
+		//sort the list desc
+		categoryList.sort(function(a,b){
+				return b.qty - a.qty;
+		});
+			//console.log(categoryList[0]);
+		//creating an object literal to allow us to return two values
+		return {
+			mostPopularCat : categoryList[0],
+			leastPopularCat : categoryList[categoryList.length-1]
+		};
 		
 	};
  
  //reading the Nelisa sales history csv file and splitting it into columns
 	this.earningPerPrdct = function(){
-		var linesInFile = fs.readFileSync(folderName, "utf8");
+		var linesInFile = fs.readFileSync(fileName, "utf8");
 		var splitLines = linesInFile.split('\r');
 
 		//skip the first line as it contains the column names
@@ -251,7 +256,7 @@
 				}
 					earnings[catMap[product]] += totalPrices[product]
 			}
-			console.log(earnings);
+			//console.log(earnings);
 			//console.log("============>>")
 			return earnings;
 	}

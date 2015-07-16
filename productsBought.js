@@ -84,27 +84,23 @@ module.exports = function(purchacesFile) {
 		  	'Valentine Cards': 'Valentine Goodies',
 		  };
 
-		var purchasesMap = getTotalPurchasesPerProduct()  
-		var profCatMap = {};
+		   var purchasesMap = getTotalPurchasesPerProduct()  
+		   var profCatMap = {};
 		
 		for(var productName in purchasesMap){
-			var catName = catGroup[productName];
-			var qty = purchasesMap[productName];
+			 var catName = catGroup[productName];
+			 var qty = purchasesMap[productName];
+
 			// is the productName in the map?
-			if(profCatMap[catName] == undefined){
+		if(profCatMap[catName] == undefined){
 				//if it is not in the map add it to the map...
-				profCatMap[catName] = 0;
+			 profCatMap[catName] = 0;
 			}
-
-			// now add the qty for each product to the correct qty...
-			profCatMap[catName] = profCatMap[catName] + Number(qty);
+			 // now add the qty for each product to the correct qty...
+			 profCatMap[catName] = profCatMap[catName] + Number(qty);
 		}
-		//console.log(profCatMap)
-		
+		   //console.log(profCatMap)
 		return profCatMap;
-
 	}
-
-
 
 }
